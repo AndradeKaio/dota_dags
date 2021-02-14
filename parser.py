@@ -28,14 +28,14 @@ def get_match(match_id):
 
 
 def get_matches_mock():
-    with open('matches.json', 'rt') as file:
+    with open('mock/matches.json', 'rt') as file:
         data = file.read()
         file.close()
     return json.loads(data)
 
 
 def get_matches_info_mock():
-    with open('matches_infos.json', 'rt') as file:
+    with open('mock/matches_infos.json', 'rt') as file:
         data = file.read()
         file.close()
     return json.loads(data)
@@ -58,7 +58,8 @@ def transform(data: dict):
             )
 
     for match in matches_info:
-        match['start_time'] = datetime.fromtimestamp(match['start_time'])
+        # match['start_time'] = datetime.fromtimestamp(match['start_time'])
+        match['start_time'] = datetime.fromtimestamp(match['start_time']).strftime("%Y/%m/%d, %H:%M:%S")
         match['draft_timings'] = [Json(match['draft_timings'])]
 
 
@@ -116,31 +117,32 @@ def load(data: dict):
         dbconnect.commit()
 
         for match in matches:
+            print(match['draft_timings'])
             try:
                 cursor.execute(query.matches_insert, [*match.values()])
             except pg.errors.UniqueViolation as e:
                 print(e)
                 dbconnect.rollback()
-
-        
+            else:
+                dbconnect.commit()
+            
         for match_info in matches_info:
             try:
                 cursor.execute(query.match_info_insert, [*match_info.values()])
             except pg.errors.ForeignKeyViolation as e:
                 print(e)
                 dbconnect.rollback()
+            else:
+                dbconnect.commit()
 
-
-        dbconnect.commit()
         for player in players:
             try:
                 cursor.execute(query.player_insert, [*player.values()])
             except pg.errors.ForeignKeyViolation as e:
                 print(e)
                 dbconnect.rollback()
-
-
-        dbconnect.commit()
+            else:
+                dbconnect.commit()
 
 
 
